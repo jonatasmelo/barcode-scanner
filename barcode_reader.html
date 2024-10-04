@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Barcode Scanner</title>
+  <script src="https://unpkg.com/@zxing/library@latest"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    video {
+      width: 100%;
+      max-width: 300px; /* Tamanho da visualização do vídeo */
+      margin-bottom: 20px;
+      border: 2px solid #ddd;
+      display: none; /* O vídeo será mostrado após clicar no botão */
+    }
+    textarea {
+      width: 100%;
+      max-width: 400px;
+      height: 100px;
+      margin-bottom: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Barcode Scanner</h1>
+<button id="startButton">Escanear</button>
+<video id="video" autoplay playsinline></video> <!-- Janela de visualização da câmera -->
+<textarea id="codes" placeholder="Scanned codes will appear here..." readonly></textarea>
+<button onclick="copyText()">Copiar Códigos</button>
+
+<script>
+  const videoElement = document.getElementById('video');
+  const codesElement = document.getElementById('codes');
+  let codesScanned = [];
+  let codeReader = new ZXing.BrowserMultiFormatReader(); // Leitor de código de barras
+
+  // Função para solicitar acesso à câmera e iniciar o escaneamento
+  document.getElementById('startButton').addEventListener('click', () => {
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }) // Solicita a câmera traseira
+      .then(function(stream) {
+        videoElement.srcObject = stream;
+        videoElement.style.display = 'block'; // Mostra o vídeo
+        codeReader.decodeFromVideoElement(videoElement, (result, err) => {
+          if (result) {
+            if (!codesScanned.includes(result.text)) {
+              codesScanned.push(result.text);
+              codesElement.value = codesScanned.join('\n'); // Exibe os códigos escaneados
+            }
+          }
+          if (err && !(err instanceof ZXing.NotFoundException)) {
+            console.error(err); // Exibe erros, exceto "NotFoundException" que significa que o código não foi encontrado
+          }
+        });
+      })
+      .catch(function(err) {
+        console.error("Erro ao acessar a câmera: ", err);
+        alert("Erro ao acessar a câmera. Certifique-se de que o navegador tem permissão para usar a câmera.");
+      });
+  });
+
+  // Função para copiar os códigos escaneados
+  function copyText() {
+    codesElement.select();
+    document.execCommand("copy");
+    alert("Códigos copiados para a área de transferência!");
+  }
+</script>
+
+</body>
+</html>
